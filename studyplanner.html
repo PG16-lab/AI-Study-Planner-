@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Planner</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #2d3748; /* Darker gray text */
+        }
+        .container {
+            max-width: 960px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff; /* White card background */
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 15px -5px rgba(0, 0, 0, 0.05); /* Softer shadow */
+        }
+        input, button, select {
+            border-radius: 8px; /* Slightly rounded for inputs and buttons */
+        }
+        .btn-primary {
+            background-color: #4c51bf; /* Deeper purple */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #5a67d8; /* Lighter purple on hover */
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #4c51bf;
+            color: #4c51bf;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-outline:hover {
+            background-color: #e0e7ff; /* Very light blue on hover */
+            color: #3b43a9;
+        }
+        .input-field {
+            border: 1px solid #cbd5e0; /* Light gray border */
+            padding: 0.65rem 1rem;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .input-field:focus {
+            border-color: #667eea; /* Blue focus ring */
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3); /* Soft blue shadow on focus */
+        }
+        .table-header {
+            background-color: #edf2f7; /* Lighter gray for table header */
+            color: #4a5568; /* Dark gray text */
+            font-weight: 600;
+        }
+        .table-row:nth-child(even) {
+            background-color: #f7fafc; /* Alternating row background */
+        }
+        .plan-section {
+            background-color: #e6fffa; /* Light green for plan section */
+            border-left: 5px solid #38b2ac; /* Green border */
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+        .guidance-section {
+            background-color: #ebf8ff; /* Light blue for guidance */
+            border-left: 5px solid #4299e1; /* Blue border */
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+        .alert-box {
+            background-color: #fffaf0; /* Light orange for alerts */
+            color: #c05621; /* Dark orange text */
+            border: 1px solid #ecc94b; /* Yellow border */
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center mb-8 text-indigo-700">AI Study Planner</h1>
+
+        <div id="alertBox" class="alert-box"></div>
+
+        <div class="mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Add Subject Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="subjectName" class="block text-sm font-medium text-gray-700 mb-1">Subject Name:</label>
+                    <input type="text" id="subjectName" class="input-field" placeholder="e.g., Mathematics">
+                </div>
+                <div>
+                    <label for="marks" class="block text-sm font-medium text-gray-700 mb-1">Marks (out of 100):</label>
+                    <input type="number" id="marks" class="input-field" min="0" max="100" placeholder="e.g., 75">
+                </div>
+                <div>
+                    <label for="studyTime" class="block text-sm font-medium text-gray-700 mb-1">Study Time per Unit (hours):</label>
+                    <input type="number" id="studyTime" class="input-field" min="0.1" step="0.1" placeholder="e.g., 3.5">
+                </div>
+            </div>
+            <button id="addSubjectBtn" class="btn-primary w-full md:w-auto">Add Subject</button>
+        </div>
+
+        <div class="mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Your Subjects</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <thead>
+                        <tr class="table-header">
+                            <th class="py-3 px-4 text-left border-b border-gray-200">Subject</th>
+                            <th class="py-3 px-4 text-left border-b border-gray-200">Marks</th>
+                            <th class="py-3 px-4 text-left border-b border-gray-200">Study Time/Unit (hrs)</th>
+                            <th class="py-3 px-4 text-left border-b border-gray-200">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjectsTableBody">
+                        <!-- Subjects will be dynamically added here -->
+                        <tr id="noSubjectsRow">
+                            <td colspan="4" class="py-4 px-4 text-center text-gray-500">No subjects added yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button id="generatePlanBtn" class="btn-primary mt-6 w-full md:w-auto" disabled>Generate Study Plan</button>
+        </div>
+
+        <div id="studyPlanOutput" class="hidden">
+            <div class="plan-section mb-6">
+                <h2 class="text-2xl font-semibold mb-4 text-teal-700">Your Personalized Study Plan</h2>
+                <div id="planContent" class="prose max-w-none">
+                    <!-- Plan content will be inserted here -->
+                </div>
+            </div>
+
+            <div class="guidance-section">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-700">AI Guidance for Effective Studying</h2>
+                <div id="guidanceContent" class="prose max-w-none">
+                    <!-- Guidance content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let subjects = []; // Array to store subject data
+        const alertBox = document.getElementById('alertBox');
+        const subjectNameInput = document.getElementById('subjectName');
+        const marksInput = document.getElementById('marks');
+        const studyTimeInput = document.getElementById('studyTime');
+        const addSubjectBtn = document.getElementById('addSubjectBtn');
+        const subjectsTableBody = document.getElementById('subjectsTableBody');
+        const noSubjectsRow = document.getElementById('noSubjectsRow');
+        const generatePlanBtn = document.getElementById('generatePlanBtn');
+        const studyPlanOutput = document.getElementById('studyPlanOutput');
+        const planContent = document.getElementById('planContent');
+        const guidanceContent = document.getElementById('guidanceContent');
+
+        // --- Utility Functions ---
+
+        function showAlert(message, type = 'warning') {
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+            if (type === 'success') {
+                alertBox.style.backgroundColor = '#d4edda'; // Light green
+                alertBox.style.color = '#155724'; // Dark green
+                alertBox.style.borderColor = '#c3e6cb';
+            } else if (type === 'error') {
+                alertBox.style.backgroundColor = '#f8d7da'; // Light red
+                alertBox.style.color = '#721c24'; // Dark red
+                alertBox.style.borderColor = '#f5c6cb';
+            } else { // warning (default)
+                alertBox.style.backgroundColor = '#fff3cd'; // Light yellow
+                alertBox.style.color = '#856404'; // Dark yellow
+                alertBox.style.borderColor = '#ffeeba';
+            }
+            setTimeout(() => {
+                alertBox.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+
+        function renderSubjectsTable() {
+            subjectsTableBody.innerHTML = ''; // Clear existing rows
+            if (subjects.length === 0) {
+                noSubjectsRow.style.display = 'table-row';
+                generatePlanBtn.disabled = true;
+            } else {
+                noSubjectsRow.style.display = 'none';
+                subjects.forEach((subject, index) => {
+                    const row = subjectsTableBody.insertRow();
+                    row.className = 'table-row';
+                    row.innerHTML = `
+                        <td class="py-3 px-4 border-b border-gray-200">${subject.name}</td>
+                        <td class="py-3 px-4 border-b border-gray-200">${subject.marks}</td>
+                        <td class="py-3 px-4 border-b border-gray-200">${subject.study_time_per_unit}</td>
+                        <td class="py-3 px-4 border-b border-gray-200">
+                            <button onclick="removeSubject(${index})" class="text-red-600 hover:text-red-800 font-medium">Remove</button>
+                        </td>
+                    `;
+                });
+                generatePlanBtn.disabled = false;
+            }
+        }
+
+        function removeSubject(index) {
+            subjects.splice(index, 1); // Remove the subject at the given index
+            renderSubjectsTable(); // Re-render the table
+            showAlert('Subject removed.', 'success');
+            // Hide output if all subjects are removed
+            if (subjects.length === 0) {
+                studyPlanOutput.classList.add('hidden');
+            }
+        }
+
+        // --- Core Logic (Python translated to JavaScript) ---
+
+        function addSubject() {
+            const name = subjectNameInput.value.trim();
+            const marks = parseFloat(marksInput.value);
+            const studyTime = parseFloat(studyTimeInput.value);
+
+            if (!name) {
+                showAlert('Please enter a subject name.');
+                return;
+            }
+            if (isNaN(marks) || marks < 0 || marks > 100) {
+                showAlert('Please enter valid marks (0-100).');
+                return;
+            }
+            if (isNaN(studyTime) || studyTime <= 0) {
+                showAlert('Please enter a positive study time per unit.');
+                return;
+            }
+
+            subjects.push({
+                name: name,
+                marks: marks,
+                study_time_per_unit: studyTime
+            });
+
+            // Clear inputs
+            subjectNameInput.value = '';
+            marksInput.value = '';
+            studyTimeInput.value = '';
+
+            renderSubjectsTable();
+            showAlert('Subject added successfully!', 'success');
+        }
+
+        function analyzeDataJS(subjectsData) {
+            let weakSubjects = [];
+            let strongSubjects = [];
+            let totalMarks = 0;
+            let totalStudyTimePerUnit = 0;
+            const numSubjects = subjectsData.length;
+
+            if (numSubjects === 0) {
+                return {
+                    weakSubjects: [],
+                    strongSubjects: [],
+                    averageMarks: 0,
+                    averageStudySpeed: 0
+                };
+            }
+
+            subjectsData.forEach(subject => {
+                totalMarks += subject.marks;
+                totalStudyTimePerUnit += subject.study_time_per_unit;
+
+                if (subject.marks < 60) {
+                    weakSubjects.push(subject.name);
+                } else if (subject.marks >= 80) {
+                    strongSubjects.push(subject.name);
+                }
+            });
+
+            const averageMarks = totalMarks / numSubjects;
+            const averageStudySpeed = totalStudyTimePerUnit / numSubjects;
+
+            return { weakSubjects, strongSubjects, averageMarks, averageStudySpeed };
+        }
+
+        function generateStudyPlanJS(subjectsData, weakSubjects, averageStudySpeed) {
+            let planHtml = '';
+            let totalEstimatedStudyHours = 0;
+
+            if (weakSubjects.length > 0) {
+                planHtml += '<h3 class="text-xl font-semibold mb-2 text-teal-600">Focus Areas (Based on your marks):</h3>';
+                weakSubjects.forEach(subjectName => {
+                    const subject = subjectsData.find(s => s.name === subjectName);
+                    if (subject) {
+                        const estimatedHours = subject.study_time_per_unit * 1.5;
+                        planHtml += `<p>- <strong>${subject.name}</strong>: Focus heavily on improving concepts. Aim for at least ${estimatedHours.toFixed(1)} hours per challenging unit/chapter.</p>`;
+                        totalEstimatedStudyHours += estimatedHours;
+                    }
+                });
+            } else {
+                planHtml += '<p class="font-medium text-gray-700">Great job! You don\'t have any significantly weak subjects based on the provided marks. Continue to review all subjects consistently.</p>';
+            }
+
+            planHtml += '<h3 class="text-xl font-semibold mt-4 mb-2 text-teal-600">General Study Recommendations:</h3>';
+            subjectsData.forEach(subject => {
+                if (!weakSubjects.includes(subject.name)) {
+                    const estimatedHours = subject.study_time_per_unit;
+                    planHtml += `<p>- <strong>${subject.name}</strong>: Review regularly. Dedicate around ${estimatedHours.toFixed(1)} hours per unit/chapter for maintenance and deeper understanding.</p>`;
+                    totalEstimatedStudyHours += estimatedHours;
+                }
+            });
+
+            planHtml += `<h3 class="text-xl font-semibold mt-4 mb-2 text-teal-600">Estimated Time Commitment:</h3>`;
+            planHtml += `<p>Based on your self-reported study speed and identified weak areas, you might need approximately <strong>${totalEstimatedStudyHours.toFixed(1)} hours</strong> to cover all your current topics effectively before your next assessment.</p>`;
+            planHtml += `<p class="text-sm text-gray-600"><em>This is a rough estimate; adjust based on actual content volume and depth required.</em></p>`;
+
+            planHtml += `<h3 class="text-xl font-semibold mt-4 mb-2 text-teal-600">Overall Study Strategy:</h3>`;
+            planHtml += `<p>Your average study speed appears to be around <strong>${averageStudySpeed.toFixed(1)} hours per 'unit'</strong>.</p>`;
+            planHtml += `<p>Leverage this understanding:</p>`;
+            planHtml += `<ul>`;
+            planHtml += `<li>For new topics: Estimate time needed based on complexity and your average speed.</li>`;
+            planHtml += `<li>For revision: Quicker review sessions for strong areas, longer, more focused sessions for weak areas.</li>`;
+            planHtml += `<li>Break down large topics into smaller 'units' to better track your progress.</li>`;
+            planHtml += `</ul>`;
+
+            return planHtml;
+        }
+
+        function provideGuidanceJS() {
+            let guidanceHtml = '';
+            guidanceHtml += '<p class="font-medium text-gray-700">Here are some tips to maximize your study efficiency:</p>';
+            guidanceHtml += '<ol class="list-decimal list-inside space-y-1 mt-3">';
+            guidanceHtml += '<li><strong>Active Recall</strong>: Instead of just re-reading, test yourself frequently (flashcards, quizzes, self-explanation).</li>';
+            guidanceHtml += '<li><strong>Spaced Repetition</strong>: Review material at increasing intervals over time to strengthen memory.</li>';
+            guidanceHtml += '<li><strong>Pomodoro Technique</strong>: Study for 25 minutes, then take a 5-minute break. After 4 cycles, take a longer break.</li>';
+            guidanceHtml += '<li><strong>Eliminate Distractions</strong>: Turn off notifications, find a quiet study environment.</li>';
+            guidanceHtml += '<li><strong>Understand, Don\'t Memorize</strong>: Focus on comprehending concepts rather than rote memorization.</li>';
+            guidanceHtml += '<li><strong>Teach Others</strong>: Explaining a concept to someone else (or even an imaginary person/rubber duck) solidifies your understanding.</li>';
+            guidanceHtml += '<li><strong>Stay Hydrated and Take Breaks</strong>: Essential for sustained focus and energy.</li>';
+            guidanceHtml += '<li><strong>Sleep Well</strong>: Adequate sleep is crucial for memory consolidation.</li>';
+            guidanceHtml += '<li><strong>Review Mistakes</strong>: Analyze why you got questions wrong and learn from them.</li>';
+            guidanceHtml += '<li><strong>Set SMART Goals</strong>: Specific, Measurable, Achievable, Relevant, Time-bound.</li>';
+            guidanceHtml += '</ol>';
+            guidanceHtml += '<p class="mt-4 font-medium text-gray-700">Remember to adapt these strategies to what works best for you!</p>';
+            return guidanceHtml;
+        }
+
+        function generatePlan() {
+            if (subjects.length === 0) {
+                showAlert('Please add at least one subject to generate a plan.', 'error');
+                return;
+            }
+
+            const { weakSubjects, strongSubjects, averageMarks, averageStudySpeed } = analyzeDataJS(subjects);
+            const planHtml = generateStudyPlanJS(subjects, weakSubjects, averageStudySpeed);
+            const guidanceHtml = provideGuidanceJS();
+
+            planContent.innerHTML = planHtml;
+            guidanceContent.innerHTML = guidanceHtml;
+
+            studyPlanOutput.classList.remove('hidden'); // Show the output section
+            showAlert('Study plan generated successfully!', 'success');
+        }
+
+        // --- Event Listeners ---
+        addSubjectBtn.addEventListener('click', addSubject);
+        generatePlanBtn.addEventListener('click', generatePlan);
+
+        // Initial render of the table
+        renderSubjectsTable();
+    </script>
+</body>
+</html>
+
